@@ -163,6 +163,48 @@ function PaymentTicker() {
   );
 }
 
+function PaymentToast() {
+  const [toast, setToast] = useState<{ name: string; city: string; amount: string; coin: string } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const show = () => {
+      const name = TICKER_NAMES[Math.floor(Math.random() * TICKER_NAMES.length)];
+      const city = TICKER_CITIES[Math.floor(Math.random() * TICKER_CITIES.length)];
+      const coin = TICKER_COINS[Math.floor(Math.random() * TICKER_COINS.length)];
+      const amount = (Math.random() * 1800 + 80).toFixed(0);
+      setToast({ name, city, amount, coin });
+      setVisible(true);
+      setTimeout(() => setVisible(false), 4000);
+    };
+
+    const id = setInterval(show, 7000);
+    const first = setTimeout(show, 2500);
+    return () => { clearInterval(id); clearTimeout(first); };
+  }, []);
+
+  if (!toast) return null;
+
+  return (
+    <div className={`fixed bottom-6 left-6 z-50 transition-all duration-500 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"}`}>
+      <div className="flex items-center gap-3 bg-coal-700 border border-coal-500 rounded-2xl px-4 py-3 shadow-2xl shadow-black/50 backdrop-blur-sm max-w-xs">
+        <div className="w-9 h-9 bg-green-400/15 border border-green-400/30 rounded-xl flex items-center justify-center shrink-0">
+          <Icon name="TrendingUp" size={16} className="text-green-400" />
+        </div>
+        <div>
+          <div className="font-golos text-white text-sm font-medium leading-tight">
+            {toast.name} из {toast.city}
+          </div>
+          <div className="font-golos text-green-400 text-sm font-bold">
+            +${toast.amount} <span className="text-gray-500 font-normal">({toast.coin})</span>
+          </div>
+        </div>
+        <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shrink-0 ml-1" />
+      </div>
+    </div>
+  );
+}
+
 function useLiveCounter(base: number, variance: number, interval = 3000) {
   const [value, setValue] = useState(base);
   useEffect(() => {
@@ -1003,6 +1045,9 @@ export default function Index() {
 
       {/* Модальное окно выбора тарифа */}
       {modalTariff && <TariffModal tariff={modalTariff} onClose={() => setModalTariff(null)} />}
+
+      {/* Всплывающие уведомления о выплатах */}
+      <PaymentToast />
 
       {/* FOOTER */}
       <footer className="bg-coal-800 border-t border-coal-600 py-12">
