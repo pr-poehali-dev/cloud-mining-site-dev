@@ -133,6 +133,204 @@ function StatCard({ stat }: { stat: typeof STATS[0] }) {
   );
 }
 
+function TariffsSection() {
+  const [selectedTariff, setSelectedTariff] = useState<(typeof TARIFFS)[0] | null>(null);
+  const [form, setForm] = useState({ name: "", contact: "" });
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleClose = () => {
+    setSelectedTariff(null);
+    setStatus("idle");
+    setForm({ name: "", contact: "" });
+    setErrorMsg("");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.contact.trim()) {
+      setErrorMsg("Пожалуйста, заполните имя и контакт");
+      return;
+    }
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      const res = await fetch(SEND_LEAD_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          contact: form.contact,
+          budget: `Тариф «${selectedTariff?.name}» — $${selectedTariff?.price}`,
+          message: `Выбранный тариф: ${selectedTariff?.name} (${selectedTariff?.hashrate}), доход ${selectedTariff?.income}/${selectedTariff?.period}`,
+        }),
+      });
+      if (res.ok || res.status === 207) {
+        setStatus("success");
+      } else {
+        throw new Error();
+      }
+    } catch {
+      setStatus("error");
+      setErrorMsg("Не удалось отправить заявку. Попробуйте позже.");
+    }
+  };
+
+  return (
+    <>
+      <section id="tariffs" className="py-24 bg-coal-800">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="font-golos text-gold text-sm font-medium mb-3 tracking-widest uppercase">Тарифы</div>
+            <h2 className="font-oswald text-4xl md:text-5xl font-bold mb-4">ВЫБЕРИТЕ СВОЙ <span className="text-gold">ПЛАН</span></h2>
+            <p className="font-golos text-gray-400 max-w-xl mx-auto">Гибкие контракты под любой бюджет. Начните с малого и масштабируйтесь вместе с доходом.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {TARIFFS.map((t) => (
+              <div
+                key={t.name}
+                className={`relative rounded-3xl border-2 ${t.border} overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl ${
+                  t.popular ? "shadow-gold/20 shadow-xl scale-105" : ""
+                }`}
+              >
+                {t.popular && (
+                  <div className="absolute top-0 left-0 right-0 bg-gold text-center py-2">
+                    <span className="font-golos text-xs font-bold text-coal-DEFAULT tracking-widest uppercase">Популярный выбор</span>
+                  </div>
+                )}
+                <div className={`bg-gradient-to-br ${t.color} p-8 ${t.popular ? "pt-12" : ""}`}>
+                  <div className="font-oswald text-2xl font-bold text-white mb-1">{t.name}</div>
+                  <div className="font-golos text-gray-400 text-sm mb-6">{t.hashrate}</div>
+                  <div className="mb-2">
+                    <span className="font-oswald text-5xl font-bold text-white">${t.price}</span>
+                    <span className="font-golos text-gray-400 text-sm ml-2">инвестиция</span>
+                  </div>
+                  <div className="font-golos text-gold font-semibold text-lg mb-6">Доход {t.income} / {t.period}</div>
+                  <ul className="space-y-3 mb-8">
+                    {t.features.map((f) => (
+                      <li key={f} className="flex items-center gap-3 font-golos text-sm text-gray-300">
+                        <Icon name="Check" size={16} className="text-gold shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => { setSelectedTariff(t); setStatus("idle"); }}
+                    className={`w-full py-3.5 rounded-xl font-golos font-bold text-sm transition-all hover:scale-105 ${
+                      t.popular
+                        ? "bg-coal-DEFAULT text-gold border-2 border-gold hover:bg-coal-700"
+                        : "bg-gold text-coal-DEFAULT hover:bg-gold-light"
+                    }`}
+                  >
+                    Выбрать тариф
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Модальное окно */}
+      {selectedTariff && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in"
+          onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
+        >
+          <div className="bg-coal-700 border border-coal-500 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-scale-in">
+            {status === "success" ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-400/10 border border-green-400/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Icon name="CheckCircle" size={32} className="text-green-400" />
+                </div>
+                <h3 className="font-oswald text-2xl font-bold text-white mb-3">Заявка отправлена!</h3>
+                <p className="font-golos text-gray-400 mb-2">Тариф <span className="text-gold font-semibold">«{selectedTariff.name}»</span> выбран.</p>
+                <p className="font-golos text-gray-400 mb-6">Мы свяжемся с вами в течение 15 минут.</p>
+                <button
+                  onClick={handleClose}
+                  className="font-golos text-gold border border-gold/30 px-6 py-2.5 rounded-xl hover:bg-gold/10 transition-colors"
+                >
+                  Закрыть
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h3 className="font-oswald text-2xl font-bold text-white">Оформить тариф</h3>
+                    <p className="font-golos text-gray-400 text-sm mt-1">Мы свяжемся и проведём вас по шагам</p>
+                  </div>
+                  <button type="button" onClick={handleClose} className="text-gray-500 hover:text-white transition-colors mt-1">
+                    <Icon name="X" size={20} />
+                  </button>
+                </div>
+
+                <div className="bg-coal-600 border border-gold/20 rounded-xl p-4 flex items-center justify-between">
+                  <div>
+                    <div className="font-oswald text-lg font-bold text-white">{selectedTariff.name}</div>
+                    <div className="font-golos text-gold text-sm">Доход {selectedTariff.income} / {selectedTariff.period}</div>
+                  </div>
+                  <div className="font-oswald text-2xl font-bold text-white">${selectedTariff.price}</div>
+                </div>
+
+                <div>
+                  <label className="font-golos text-sm text-gray-400 mb-1.5 block">Ваше имя *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={form.name}
+                    onChange={handleChange}
+                    placeholder="Как к вам обращаться"
+                    className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white placeholder-gray-600 focus:outline-none focus:border-gold/50 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="font-golos text-sm text-gray-400 mb-1.5 block">Телефон / Telegram *</label>
+                  <input
+                    type="text"
+                    name="contact"
+                    value={form.contact}
+                    onChange={handleChange}
+                    placeholder="+7 или @username"
+                    className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white placeholder-gray-600 focus:outline-none focus:border-gold/50 transition-colors"
+                  />
+                </div>
+
+                {errorMsg && (
+                  <div className="flex items-center gap-2 text-red-400 font-golos text-sm bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3">
+                    <Icon name="AlertCircle" size={16} />
+                    {errorMsg}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="w-full bg-gold text-coal-DEFAULT font-golos font-bold py-4 rounded-xl hover:bg-gold-light transition-all duration-200 hover:scale-105 text-base disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                >
+                  {status === "loading" ? (
+                    <>
+                      <Icon name="Loader2" size={18} className="animate-spin" />
+                      Отправляем...
+                    </>
+                  ) : (
+                    "Подать заявку"
+                  )}
+                </button>
+                <p className="font-golos text-xs text-gray-600 text-center">Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности</p>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function ContactSection() {
   const [form, setForm] = useState({ name: "", contact: "", budget: "", message: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -578,55 +776,8 @@ export default function Index() {
       </section>
 
       {/* ТАРИФЫ */}
-      <section id="tariffs" className="py-24 bg-coal-800">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="font-golos text-gold text-sm font-medium mb-3 tracking-widest uppercase">Тарифы</div>
-            <h2 className="font-oswald text-4xl md:text-5xl font-bold mb-4">ВЫБЕРИТЕ СВОЙ <span className="text-gold">ПЛАН</span></h2>
-            <p className="font-golos text-gray-400 max-w-xl mx-auto">Гибкие контракты под любой бюджет. Начните с малого и масштабируйтесь вместе с доходом.</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {TARIFFS.map((t) => (
-              <div
-                key={t.name}
-                className={`relative rounded-3xl border-2 ${t.border} overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl ${
-                  t.popular ? "shadow-gold/20 shadow-xl scale-105" : ""
-                }`}
-              >
-                {t.popular && (
-                  <div className="absolute top-0 left-0 right-0 bg-gold text-center py-2">
-                    <span className="font-golos text-xs font-bold text-coal-DEFAULT tracking-widest uppercase">Популярный выбор</span>
-                  </div>
-                )}
-                <div className={`bg-gradient-to-br ${t.color} p-8 ${t.popular ? "pt-12" : ""}`}>
-                  <div className="font-oswald text-2xl font-bold text-white mb-1">{t.name}</div>
-                  <div className="font-golos text-gray-400 text-sm mb-6">{t.hashrate}</div>
-                  <div className="mb-2">
-                    <span className="font-oswald text-5xl font-bold text-white">${t.price}</span>
-                    <span className="font-golos text-gray-400 text-sm ml-2">инвестиция</span>
-                  </div>
-                  <div className="font-golos text-gold font-semibold text-lg mb-6">Доход {t.income} / {t.period}</div>
-                  <ul className="space-y-3 mb-8">
-                    {t.features.map((f) => (
-                      <li key={f} className="flex items-center gap-3 font-golos text-sm text-gray-300">
-                        <Icon name="Check" size={16} className="text-gold shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <button className={`w-full py-3.5 rounded-xl font-golos font-bold text-sm transition-all hover:scale-105 ${
-                    t.popular
-                      ? "bg-coal-DEFAULT text-gold border-2 border-gold hover:bg-coal-700"
-                      : "bg-gold text-coal-DEFAULT hover:bg-gold-light"
-                  }`}>
-                    Выбрать тариф
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <TariffsSection />
+
 
       {/* КАЛЬКУЛЯТОР */}
       <section id="calc" className="py-24 max-w-7xl mx-auto px-6">
