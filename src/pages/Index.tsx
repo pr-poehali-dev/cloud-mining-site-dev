@@ -133,6 +133,36 @@ function StatCard({ stat }: { stat: typeof STATS[0] }) {
   );
 }
 
+const TICKER_NAMES = ["Александр М.", "Елена К.", "Дмитрий В.", "Ольга Н.", "Сергей П.", "Анна Р.", "Михаил Т.", "Наталья С.", "Иван Ф.", "Мария Л.", "Артём Ш.", "Юлия Д.", "Андрей З.", "Кристина Е.", "Роман Б."];
+const TICKER_CITIES = ["Москва", "СПб", "Казань", "Краснодар", "Екб", "Новосибирск", "Минск", "Алматы", "Киев", "Ташкент", "Баку", "Тбилиси"];
+const TICKER_COINS = ["BTC", "ETH", "LTC"];
+
+function generateTicker() {
+  const name = TICKER_NAMES[Math.floor(Math.random() * TICKER_NAMES.length)];
+  const city = TICKER_CITIES[Math.floor(Math.random() * TICKER_CITIES.length)];
+  const coin = TICKER_COINS[Math.floor(Math.random() * TICKER_COINS.length)];
+  const amount = (Math.random() * 1800 + 80).toFixed(0);
+  return `${name} из ${city} получил +$${amount} (${coin})`;
+}
+
+function PaymentTicker() {
+  const COUNT = 18;
+  const [items] = useState(() => Array.from({ length: COUNT }, generateTicker));
+
+  return (
+    <div className="w-full overflow-hidden bg-coal-800/90 border-y border-coal-600 backdrop-blur-sm py-2.5 select-none">
+      <div className="flex animate-ticker whitespace-nowrap">
+        {[...items, ...items].map((text, i) => (
+          <span key={i} className="inline-flex items-center gap-2 mx-8 font-golos text-sm text-gray-400 shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block shrink-0" />
+            {text}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function useLiveCounter(base: number, variance: number, interval = 3000) {
   const [value, setValue] = useState(base);
   useEffect(() => {
@@ -810,6 +840,8 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      <PaymentTicker />
 
       {/* О ПЛАТФОРМЕ */}
       <section id="about" className="py-24 max-w-7xl mx-auto px-6">

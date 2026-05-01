@@ -121,6 +121,10 @@ export default {
 				'scan-line': {
 					'0%': { transform: 'translateY(-100%)' },
 					'100%': { transform: 'translateY(100vh)' }
+				},
+				'ticker': {
+					'0%': { transform: 'translateX(0)' },
+					'100%': { transform: 'translateX(-50%)' }
 				}
 			},
 			animation: {
@@ -131,6 +135,7 @@ export default {
 				'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
 				'float': 'float 4s ease-in-out infinite',
 				'scan-line': 'scan-line 6s linear infinite',
+				'ticker': 'ticker 45s linear infinite',
 			}
 		}
 	},
