@@ -644,7 +644,7 @@ export default function Index() {
           </div>
           <div className="hidden lg:flex items-center gap-3">
             <button className="font-golos text-sm text-gray-300 hover:text-white transition-colors px-4 py-2">Войти</button>
-            <button className="font-golos text-sm bg-gold text-coal-DEFAULT font-semibold px-5 py-2.5 rounded-xl hover:bg-gold-light transition-colors animate-glow-pulse">
+            <button onClick={() => setModalTariff(TARIFFS[0])} className="font-golos text-sm bg-gold text-coal-DEFAULT font-semibold px-5 py-2.5 rounded-xl hover:bg-gold-light transition-colors animate-glow-pulse">
               Начать бесплатно
             </button>
           </div>
@@ -659,7 +659,7 @@ export default function Index() {
                 {l.label}
               </button>
             ))}
-            <button className="w-full mt-3 bg-gold text-coal-DEFAULT font-golos font-semibold py-3 rounded-xl hover:bg-gold-light transition-colors">
+            <button onClick={() => { setMobileOpen(false); setModalTariff(TARIFFS[0]); }} className="w-full mt-3 bg-gold text-coal-DEFAULT font-golos font-semibold py-3 rounded-xl hover:bg-gold-light transition-colors">
               Начать бесплатно
             </button>
           </div>
