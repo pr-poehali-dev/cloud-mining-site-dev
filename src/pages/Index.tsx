@@ -133,6 +133,90 @@ function StatCard({ stat }: { stat: typeof STATS[0] }) {
   );
 }
 
+function useLiveCounter(base: number, variance: number, interval = 3000) {
+  const [value, setValue] = useState(base);
+  useEffect(() => {
+    const id = setInterval(() => {
+      const delta = Math.floor((Math.random() - 0.45) * variance);
+      setValue((v) => Math.max(base - variance * 2, v + delta));
+    }, interval);
+    return () => clearInterval(id);
+  }, [base, variance, interval]);
+  return value;
+}
+
+function LiveStats() {
+  const users = useLiveCounter(14_382, 3, 4200);
+  const [paid, setPaid] = useState(2_847_913);
+  const [hashrate, setHashrate] = useState(98.7);
+  const [lastTx, setLastTx] = useState({ amount: 0.0432, ago: 12 });
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPaid((v) => v + Math.floor(Math.random() * 120 + 40));
+      setHashrate((v) => parseFloat((v + (Math.random() - 0.5) * 0.4).toFixed(1)));
+      if (Math.random() > 0.6) {
+        setLastTx({ amount: parseFloat((Math.random() * 0.08 + 0.01).toFixed(4)), ago: Math.floor(Math.random() * 30 + 5) });
+      }
+    }, 2800);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="mt-12 animate-fade-in" style={{ animationDelay: "0.9s" }}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl">
+        {/* Активные пользователи */}
+        <div className="bg-coal-700/80 border border-coal-500 rounded-2xl p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-1.5 mb-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            <span className="font-golos text-xs text-gray-500">Онлайн</span>
+          </div>
+          <div className="font-oswald text-2xl font-bold text-white tabular-nums">
+            {users.toLocaleString("ru")}
+          </div>
+          <div className="font-golos text-xs text-gray-400 mt-0.5">пользователей</div>
+        </div>
+
+        {/* Выплачено */}
+        <div className="bg-coal-700/80 border border-coal-500 rounded-2xl p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Icon name="TrendingUp" size={12} className="text-gold" />
+            <span className="font-golos text-xs text-gray-500">Выплачено</span>
+          </div>
+          <div className="font-oswald text-2xl font-bold text-gold tabular-nums">
+            ${paid.toLocaleString("ru")}
+          </div>
+          <div className="font-golos text-xs text-gray-400 mt-0.5">за всё время</div>
+        </div>
+
+        {/* Хэшрейт */}
+        <div className="bg-coal-700/80 border border-coal-500 rounded-2xl p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Icon name="Cpu" size={12} className="text-neon-blue" />
+            <span className="font-golos text-xs text-gray-500">Хэшрейт</span>
+          </div>
+          <div className="font-oswald text-2xl font-bold text-white tabular-nums">
+            {hashrate} <span className="text-sm font-normal text-gray-400">PH/s</span>
+          </div>
+          <div className="font-golos text-xs text-gray-400 mt-0.5">сейчас</div>
+        </div>
+
+        {/* Последняя выплата */}
+        <div className="bg-coal-700/80 border border-coal-500 rounded-2xl p-4 backdrop-blur-sm">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Icon name="Zap" size={12} className="text-neon-cyan" />
+            <span className="font-golos text-xs text-gray-500">Выплата</span>
+          </div>
+          <div className="font-oswald text-2xl font-bold text-white tabular-nums">
+            +{lastTx.amount} <span className="text-sm font-normal text-gray-400">BTC</span>
+          </div>
+          <div className="font-golos text-xs text-gray-400 mt-0.5">{lastTx.ago} сек назад</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TariffModal({ tariff, onClose }: { tariff: (typeof TARIFFS)[0]; onClose: () => void }) {
   const [form, setForm] = useState({ name: "", contact: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -704,7 +788,7 @@ export default function Index() {
                 Рассчитать доход
               </button>
             </div>
-            <div className="flex flex-wrap gap-6 mt-12 animate-fade-in" style={{ animationDelay: "0.7s" }}>
+            <div className="flex flex-wrap gap-6 mt-8 animate-fade-in" style={{ animationDelay: "0.7s" }}>
               {[
                 { icon: "Shield", text: "Гарантия безопасности" },
                 { icon: "Clock", text: "Выплаты 24/7" },
@@ -716,6 +800,7 @@ export default function Index() {
                 </div>
               ))}
             </div>
+            <LiveStats />
           </div>
         </div>
         <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden xl:block w-1/3 pr-12 animate-float">
