@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import Icon from "@/components/ui/icon";
 
+const SEND_LEAD_URL = "https://functions.poehali.dev/e213faec-7ed5-471a-83d8-c3d37e9af8f9";
+
 const HERO_IMAGE = "https://cdn.poehali.dev/projects/867746d1-07ee-497e-b249-d611b9c67f5c/files/dcd7bfbb-1160-41b3-a990-5f86eafd7c20.jpg";
 const DASHBOARD_IMAGE = "https://cdn.poehali.dev/projects/867746d1-07ee-497e-b249-d611b9c67f5c/files/9ef04517-20fb-4652-a88e-662ab9f0cd3a.jpg";
 
@@ -127,6 +129,160 @@ function StatCard({ stat }: { stat: typeof STATS[0] }) {
         {stat.decimal ? value.toFixed(stat.decimal) : Math.round(value)}{stat.suffix}
       </div>
       <div className="text-gray-400 font-golos text-sm">{stat.label}</div>
+    </div>
+  );
+}
+
+function ContactSection() {
+  const [form, setForm] = useState({ name: "", contact: "", budget: "", message: "" });
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name.trim() || !form.contact.trim()) {
+      setErrorMsg("Пожалуйста, заполните имя и контакт");
+      return;
+    }
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      const res = await fetch(SEND_LEAD_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok || res.status === 207) {
+        setStatus("success");
+        setForm({ name: "", contact: "", budget: "", message: "" });
+      } else {
+        throw new Error("Ошибка сервера");
+      }
+    } catch {
+      setStatus("error");
+      setErrorMsg("Не удалось отправить заявку. Попробуйте позже.");
+    }
+  };
+
+  return (
+    <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <div>
+        <div className="font-golos text-gold text-sm font-medium mb-3 tracking-widest uppercase">Контакты</div>
+        <h2 className="font-oswald text-4xl md:text-5xl font-bold mb-6">ГОТОВЫ <span className="text-gold">НАЧАТЬ?</span></h2>
+        <p className="font-golos text-gray-400 text-lg mb-8 leading-relaxed">
+          Оставьте заявку, и наш менеджер свяжется с вами в течение 15 минут. Бесплатная консультация по выбору тарифа.
+        </p>
+        <div className="space-y-4 mb-8">
+          {[
+            { icon: "MessageSquare", text: "@Artem299999", label: "Telegram" },
+            { icon: "Mail", text: "sadkovartem2004@gmail.com", label: "Email" },
+          ].map((c) => (
+            <div key={c.label} className="flex items-center gap-4 p-4 bg-coal-700 rounded-xl border border-coal-500 hover:border-gold/30 transition-colors cursor-pointer group">
+              <div className="w-10 h-10 bg-gold/10 rounded-lg flex items-center justify-center border border-gold/30 group-hover:bg-gold/20 transition-colors">
+                <Icon name={c.icon} size={18} className="text-gold" />
+              </div>
+              <div>
+                <div className="font-golos text-xs text-gray-500">{c.label}</div>
+                <div className="font-golos text-white font-medium">{c.text}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="bg-coal-700 rounded-3xl border border-coal-500 p-8">
+        {status === "success" ? (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-green-400/10 border border-green-400/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Icon name="CheckCircle" size={32} className="text-green-400" />
+            </div>
+            <h3 className="font-oswald text-2xl font-bold text-white mb-3">Заявка отправлена!</h3>
+            <p className="font-golos text-gray-400 mb-6">Мы получили вашу заявку и свяжемся с вами в течение 15 минут.</p>
+            <button
+              onClick={() => setStatus("idle")}
+              className="font-golos text-gold border border-gold/30 px-6 py-2.5 rounded-xl hover:bg-gold/10 transition-colors"
+            >
+              Отправить ещё
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <h3 className="font-oswald text-2xl font-bold text-white mb-6">Получить консультацию</h3>
+            <div>
+              <label className="font-golos text-sm text-gray-400 mb-1.5 block">Имя *</label>
+              <input
+                type="text"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Ваше имя"
+                className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white placeholder-gray-600 focus:outline-none focus:border-gold/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="font-golos text-sm text-gray-400 mb-1.5 block">Телефон / Telegram *</label>
+              <input
+                type="text"
+                name="contact"
+                value={form.contact}
+                onChange={handleChange}
+                placeholder="+7 или @username"
+                className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white placeholder-gray-600 focus:outline-none focus:border-gold/50 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="font-golos text-sm text-gray-400 mb-1.5 block">Сумма инвестиции</label>
+              <select
+                name="budget"
+                value={form.budget}
+                onChange={handleChange}
+                className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white focus:outline-none focus:border-gold/50 transition-colors appearance-none"
+              >
+                <option value="">Выберите диапазон</option>
+                <option>$500 — $2 000</option>
+                <option>$2 000 — $10 000</option>
+                <option>$10 000 — $50 000</option>
+                <option>Более $50 000</option>
+              </select>
+            </div>
+            <div>
+              <label className="font-golos text-sm text-gray-400 mb-1.5 block">Сообщение (необязательно)</label>
+              <textarea
+                rows={3}
+                name="message"
+                value={form.message}
+                onChange={handleChange}
+                placeholder="Ваш вопрос или пожелание..."
+                className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white placeholder-gray-600 focus:outline-none focus:border-gold/50 transition-colors resize-none"
+              />
+            </div>
+            {errorMsg && (
+              <div className="flex items-center gap-2 text-red-400 font-golos text-sm bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3">
+                <Icon name="AlertCircle" size={16} />
+                {errorMsg}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={status === "loading"}
+              className="w-full bg-gold text-coal-DEFAULT font-golos font-bold py-4 rounded-xl hover:bg-gold-light transition-all duration-200 hover:scale-105 text-base disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+            >
+              {status === "loading" ? (
+                <>
+                  <Icon name="Loader2" size={18} className="animate-spin" />
+                  Отправляем...
+                </>
+              ) : (
+                "Отправить заявку"
+              )}
+            </button>
+            <p className="font-golos text-xs text-gray-600 text-center">Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности</p>
+          </form>
+        )}
+      </div>
     </div>
   );
 }
@@ -594,75 +750,7 @@ export default function Index() {
 
       {/* КОНТАКТЫ */}
       <section id="contact" className="py-24 max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            <div className="font-golos text-gold text-sm font-medium mb-3 tracking-widest uppercase">Контакты</div>
-            <h2 className="font-oswald text-4xl md:text-5xl font-bold mb-6">ГОТОВЫ <span className="text-gold">НАЧАТЬ?</span></h2>
-            <p className="font-golos text-gray-400 text-lg mb-8 leading-relaxed">
-              Оставьте заявку, и наш менеджер свяжется с вами в течение 15 минут. Бесплатная консультация по выбору тарифа.
-            </p>
-            <div className="space-y-4 mb-8">
-              {[
-                { icon: "MessageSquare", text: "@hashvault_support", label: "Telegram" },
-                { icon: "Mail", text: "support@hashvault.io", label: "Email" },
-                { icon: "Phone", text: "+7 (800) 000-00-00", label: "Телефон" },
-              ].map((c) => (
-                <div key={c.label} className="flex items-center gap-4 p-4 bg-coal-700 rounded-xl border border-coal-500 hover:border-gold/30 transition-colors cursor-pointer group">
-                  <div className="w-10 h-10 bg-gold/10 rounded-lg flex items-center justify-center border border-gold/30 group-hover:bg-gold/20 transition-colors">
-                    <Icon name={c.icon} size={18} className="text-gold" />
-                  </div>
-                  <div>
-                    <div className="font-golos text-xs text-gray-500">{c.label}</div>
-                    <div className="font-golos text-white font-medium">{c.text}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="bg-coal-700 rounded-3xl border border-coal-500 p-8">
-            <h3 className="font-oswald text-2xl font-bold text-white mb-6">Получить консультацию</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="font-golos text-sm text-gray-400 mb-1.5 block">Имя</label>
-                <input
-                  type="text"
-                  placeholder="Ваше имя"
-                  className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white placeholder-gray-600 focus:outline-none focus:border-gold/50 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="font-golos text-sm text-gray-400 mb-1.5 block">Телефон / Telegram</label>
-                <input
-                  type="text"
-                  placeholder="+7 или @username"
-                  className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white placeholder-gray-600 focus:outline-none focus:border-gold/50 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="font-golos text-sm text-gray-400 mb-1.5 block">Сумма инвестиции</label>
-                <select className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white focus:outline-none focus:border-gold/50 transition-colors appearance-none">
-                  <option value="">Выберите диапазон</option>
-                  <option>$500 — $2 000</option>
-                  <option>$2 000 — $10 000</option>
-                  <option>$10 000 — $50 000</option>
-                  <option>Более $50 000</option>
-                </select>
-              </div>
-              <div>
-                <label className="font-golos text-sm text-gray-400 mb-1.5 block">Сообщение (необязательно)</label>
-                <textarea
-                  rows={3}
-                  placeholder="Ваш вопрос или пожелание..."
-                  className="w-full bg-coal-600 border border-coal-500 rounded-xl px-4 py-3 font-golos text-white placeholder-gray-600 focus:outline-none focus:border-gold/50 transition-colors resize-none"
-                />
-              </div>
-              <button className="w-full bg-gold text-coal-DEFAULT font-golos font-bold py-4 rounded-xl hover:bg-gold-light transition-all duration-200 hover:scale-105 text-base">
-                Отправить заявку
-              </button>
-              <p className="font-golos text-xs text-gray-600 text-center">Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности</p>
-            </div>
-          </div>
-        </div>
+        <ContactSection />
       </section>
 
       {/* FOOTER */}

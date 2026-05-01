@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Missing required fields",
+      "method": "POST",
+      "path": "/",
+      "body": {"budget": "$500"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Valid lead submission",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Тест Тестов",
+        "contact": "+7 900 000 00 00",
+        "budget": "$500 — $2 000",
+        "message": "Тестовая заявка"
+      },
+      "expectedStatus": 207
+    }
+  ]
+}
